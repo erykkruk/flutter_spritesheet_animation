@@ -101,6 +101,25 @@ controller.animationName; // String?
 controller.dispose();
 ```
 
+### Precaching
+
+Pre-cache spritesheet images to eliminate loading flash:
+
+```dart
+// Single image
+await SpriteAnimation.precache(
+  const AssetImage('assets/explosion.png'),
+  context,
+);
+
+// Multiple images in parallel
+await SpriteAnimation.precacheAll([
+  const AssetImage('assets/idle.png'),
+  const AssetImage('assets/walk.png'),
+  const AssetImage('assets/attack.png'),
+], context);
+```
+
 ### Callbacks
 
 ```dart
@@ -162,10 +181,13 @@ Both formats are auto-detected.
 
 Optimized for smooth 60fps animation rendering:
 
+- **Zero widget rebuilds**: Uses `CustomPainter(repaint: controller)` — frame changes repaint only the paint layer, skipping `build()` entirely
+- **Zero-allocation tick loop**: Raw microsecond arithmetic instead of `Duration` objects in the hot path
 - **Pre-computed frame rects**: Grid source rectangles are calculated once at load time, not during paint
 - **Reusable Paint object**: Single Paint instance reused across frames, avoiding per-frame allocations
-- **Accumulator-based timing**: Frame advancement uses a time accumulator pattern for accurate frame pacing
-- **Efficient shouldRepaint**: Only repaints when frame index, image, or blend mode actually changes
+- **Accumulator-based timing**: Frame advancement uses a time accumulator for accurate frame pacing
+- **Image precaching**: `precache()` / `precacheAll()` to eliminate loading flash
+- **Multiple instances**: Each widget runs independently with its own controller, ticker, and paint layer
 - **No external dependencies**: Zero overhead from third-party packages
 
 ## API Reference

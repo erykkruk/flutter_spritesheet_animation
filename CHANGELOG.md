@@ -7,6 +7,9 @@
 - `SpriteAnimationController` with play/pause/stop/goToFrame.
 - Playback modes: forward, reverse, pingPong.
 - Per-frame duration from atlas data.
+- Image precaching (`SpriteAnimation.precache` / `precacheAll`).
+- Zero widget rebuilds via `CustomPainter(repaint:)` — paint-layer-only updates.
+- Zero-allocation tick loop with raw microsecond arithmetic.
 - Pre-computed grid rects for optimal rendering performance.
 - Reusable Paint object to avoid per-frame allocations.
 - Zero external dependencies (Flutter SDK only).
