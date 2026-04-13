@@ -173,10 +173,13 @@ class _SpriteAnimationState extends State<SpriteAnimation>
       _resolveImage();
     }
 
-    // Handle config changes
-    _controller.fps = widget.fps;
-    _controller.mode = widget.mode;
-    _controller.loop = widget.loop;
+    // Sync widget config to controller only when we own it.
+    // External controllers manage their own fps/mode/loop.
+    if (_ownsController) {
+      _controller.fps = widget.fps;
+      _controller.mode = widget.mode;
+      _controller.loop = widget.loop;
+    }
 
     // Handle animation name change (atlas mode)
     if (widget.atlas != null && widget.animation != oldWidget.animation) {

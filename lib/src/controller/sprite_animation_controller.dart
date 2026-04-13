@@ -136,7 +136,7 @@ class SpriteAnimationController extends ChangeNotifier {
     _animationName = null;
     _currentFrame = _currentFrame.clamp(0, _totalFrames - 1);
     if (_autoPlay && !_isPlaying && _ticker != null) {
-      play();
+      _startSilently();
     }
   }
 
@@ -155,9 +155,17 @@ class SpriteAnimationController extends ChangeNotifier {
     }
 
     if (_autoPlay && !_isPlaying && _ticker != null) {
-      play();
+      _startSilently();
     }
-    notifyListeners();
+  }
+
+  /// Starts the ticker without notifying listeners.
+  /// Used during setup to avoid setState-during-build errors.
+  void _startSilently() {
+    _isPlaying = true;
+    _previousElapsed = Duration.zero;
+    _accumulatedTime = Duration.zero;
+    _ticker?.start();
   }
 
   /// Switches to a named animation from the atlas.

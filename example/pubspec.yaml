@@ -1,0 +1,17 @@
+name: flutter_spritesheet_animation_example
+description: Demo app for flutter_spritesheet_animation.
+publish_to: none
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_spritesheet_animation:
+    path: ../
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
