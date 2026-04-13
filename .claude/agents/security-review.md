@@ -1,21 +1,35 @@
 # Security Review Agent
 
-Review code for security concerns in the flutter_spritesheet_animation package.
+## Role
+Validate security aspects of the `flutter_spritesheet_animation` library.
 
 ## Scope
-- Input validation on public API
 - JSON parsing safety
-- Resource management (memory leaks, unclosed streams)
+- Input validation
+- Resource management
 
-## Checks
-1. JSON parsing handles malformed input with clear errors
-2. Numeric inputs validated (fps > 0, frame indices in range)
-3. No unbounded memory growth (cached images, frame buffers)
-4. Image streams properly disposed on widget removal
-5. Ticker properly stopped and disposed
-6. No secrets or credentials in codebase
-7. No file system access beyond Flutter asset loading
+## Checklist
 
-## Report Format
-- PASS / FAIL for each check
-- Specific file:line references for violations
+### Input Validation
+- [ ] JSON atlas parsing validates structure before access
+- [ ] Frame indices clamped to valid range
+- [ ] FPS validated as positive number
+- [ ] Animation names validated against available animations
+- [ ] Image dimensions validated (no division by zero)
+
+### JSON Parsing Safety
+- [ ] Uses typed models (not raw `Map<String, dynamic>`)
+- [ ] `FormatException` thrown for malformed JSON
+- [ ] Null-safe property access
+- [ ] No arbitrary code execution from JSON data
+
+### Resource Management
+- [ ] Image streams properly disposed
+- [ ] Ticker stopped and disposed
+- [ ] Controller listeners removed
+- [ ] No memory leaks from retained images
+
+### Code Safety
+- [ ] No hardcoded secrets, keys, or tokens
+- [ ] Zero external dependencies (minimal attack surface)
+- [ ] No `eval()` or dynamic code execution
