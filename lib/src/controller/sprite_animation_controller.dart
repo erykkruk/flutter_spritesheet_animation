@@ -89,7 +89,7 @@ class SpriteAnimationController extends ChangeNotifier {
 
   Ticker? _ticker;
   Duration _previousElapsed = Duration.zero;
-  Duration _accumulatedTime = Duration.zero;
+  int _accumulatedMicros = 0;
 
   /// The index of the currently displayed frame.
   int get currentFrame => _currentFrame;
@@ -164,7 +164,7 @@ class SpriteAnimationController extends ChangeNotifier {
   void _startSilently() {
     _isPlaying = true;
     _previousElapsed = Duration.zero;
-    _accumulatedTime = Duration.zero;
+    _accumulatedMicros = 0;
     _ticker?.start();
   }
 
@@ -195,7 +195,7 @@ class SpriteAnimationController extends ChangeNotifier {
 
     _isPlaying = true;
     _previousElapsed = Duration.zero;
-    _accumulatedTime = Duration.zero;
+    _accumulatedMicros = 0;
     _ticker?.start();
     notifyListeners();
   }
@@ -207,7 +207,7 @@ class SpriteAnimationController extends ChangeNotifier {
     _isPlaying = false;
     _ticker?.stop();
     _previousElapsed = Duration.zero;
-    _accumulatedTime = Duration.zero;
+    _accumulatedMicros = 0;
     notifyListeners();
   }
 
@@ -220,7 +220,7 @@ class SpriteAnimationController extends ChangeNotifier {
     _currentFrame = 0;
     _isForward = true;
     _previousElapsed = Duration.zero;
-    _accumulatedTime = Duration.zero;
+    _accumulatedMicros = 0;
     notifyListeners();
   }
 
@@ -241,17 +241,15 @@ class SpriteAnimationController extends ChangeNotifier {
   void _onTick(Duration elapsed) {
     if (_totalFrames <= 1 || !_isPlaying) return;
 
-    final deltaTime = elapsed - _previousElapsed;
+    // Raw microsecond arithmetic — zero Duration allocations in hot loop.
+    _accumulatedMicros += (elapsed - _previousElapsed).inMicroseconds;
     _previousElapsed = elapsed;
-    _accumulatedTime += deltaTime;
 
-    final frameDurationMs = _currentFrameDurationMs;
-    final frameDuration = Duration(milliseconds: frameDurationMs);
-
+    final frameMicros = _currentFrameMicros;
     var didAdvance = false;
 
-    while (_accumulatedTime >= frameDuration && _isPlaying) {
-      _accumulatedTime -= frameDuration;
+    while (_accumulatedMicros >= frameMicros && _isPlaying) {
+      _accumulatedMicros -= frameMicros;
       didAdvance = true;
       if (!_advanceSingleFrame()) break;
     }
@@ -261,12 +259,12 @@ class SpriteAnimationController extends ChangeNotifier {
     }
   }
 
-  int get _currentFrameDurationMs {
+  int get _currentFrameMicros {
     final frameData = currentFrameData;
     if (frameData?.duration != null && frameData!.duration! > 0) {
-      return frameData.duration!;
+      return frameData.duration! * 1000;
     }
-    return (1000 / _fps).round();
+    return (1000000 / _fps).round();
   }
 
   bool _advanceSingleFrame() {

@@ -125,6 +125,44 @@ class SpriteAnimation extends StatefulWidget {
   /// Whether this is a grid-based animation.
   bool get isGrid => columns != null && rows != null;
 
+  /// Pre-caches a spritesheet image so it's instantly available when the
+  /// widget builds, eliminating the empty-frame loading flash.
+  ///
+  /// Call this during app startup or before navigating to a screen that
+  /// uses sprite animations:
+  ///
+  /// ```dart
+  /// await SpriteAnimation.precache(
+  ///   const AssetImage('assets/explosion.png'),
+  ///   context,
+  /// );
+  /// ```
+  ///
+  /// To precache multiple spritesheets in parallel:
+  ///
+  /// ```dart
+  /// await SpriteAnimation.precacheAll([
+  ///   const AssetImage('assets/idle.png'),
+  ///   const AssetImage('assets/walk.png'),
+  ///   const AssetImage('assets/attack.png'),
+  /// ], context);
+  /// ```
+  static Future<void> precache(ImageProvider image, BuildContext context) {
+    return precacheImage(image, context);
+  }
+
+  /// Pre-caches multiple spritesheet images in parallel.
+  ///
+  /// All images are loaded concurrently via [Future.wait].
+  static Future<void> precacheAll(
+    List<ImageProvider> images,
+    BuildContext context,
+  ) {
+    return Future.wait(
+      images.map((image) => precacheImage(image, context)),
+    );
+  }
+
   @override
   State<SpriteAnimation> createState() => _SpriteAnimationState();
 }
@@ -212,7 +250,6 @@ class _SpriteAnimationState extends State<SpriteAnimation>
     _controller.attach(this);
     _controller.onFrame = widget.onFrame;
     _controller.onComplete = widget.onComplete;
-    _controller.addListener(_onControllerUpdate);
 
     _setupFrames();
   }
@@ -230,15 +267,8 @@ class _SpriteAnimationState extends State<SpriteAnimation>
   }
 
   void _disposeController() {
-    _controller.removeListener(_onControllerUpdate);
     if (_ownsController) {
       _controller.dispose();
-    }
-  }
-
-  void _onControllerUpdate() {
-    if (mounted) {
-      setState(() {});
     }
   }
 
@@ -329,9 +359,8 @@ class _SpriteAnimationState extends State<SpriteAnimation>
       ),
       painter: _SpritePainter(
         image: _loadedImage!,
-        frame: _controller.currentFrame,
+        controller: _controller,
         gridRects: _gridRects,
-        frameData: _controller.currentFrameData,
         spritePaint: _spritePaint,
         fit: widget.fit,
       ),
@@ -353,35 +382,34 @@ class _SpriteAnimationState extends State<SpriteAnimation>
 class _SpritePainter extends CustomPainter {
   _SpritePainter({
     required this.image,
-    required this.frame,
+    required this.controller,
     this.gridRects,
-    this.frameData,
     required this.spritePaint,
     required this.fit,
-  });
+  }) : super(repaint: controller);
 
   final ui.Image image;
-  final int frame;
+  final SpriteAnimationController controller;
   final List<Rect>? gridRects;
-  final SpriteFrame? frameData;
   final Paint spritePaint;
   final BoxFit fit;
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Read frame data directly from controller — no intermediate copies.
+    final frame = controller.currentFrame;
+    final frameData = controller.currentFrameData;
+
     final Rect srcRect;
 
     if (frameData != null) {
-      // Atlas mode: use pre-defined frame rect (already computed at parse time)
-      srcRect = frameData!.rect;
+      srcRect = frameData.rect;
     } else if (gridRects != null && frame < gridRects!.length) {
-      // Grid mode: use pre-computed rect (no math in paint loop)
       srcRect = gridRects![frame];
     } else {
       return;
     }
 
-    // Calculate destination rect based on fit
     final fittedSizes = applyBoxFit(
       fit,
       Size(srcRect.width, srcRect.height),
@@ -395,9 +423,12 @@ class _SpritePainter extends CustomPainter {
     canvas.drawImageRect(image, srcRect, destinationRect, spritePaint);
   }
 
+  /// Only called when build() runs (image/config change) — NOT per frame.
+  /// Per-frame repaints are driven by the `repaint` listenable on CustomPaint.
   @override
   bool shouldRepaint(covariant _SpritePainter oldDelegate) =>
-      frame != oldDelegate.frame ||
       image != oldDelegate.image ||
+      gridRects != oldDelegate.gridRects ||
+      fit != oldDelegate.fit ||
       spritePaint.blendMode != oldDelegate.spritePaint.blendMode;
 }
