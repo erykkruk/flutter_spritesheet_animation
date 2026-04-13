@@ -1,3 +1,7 @@
+## 1.0.1
+
+- Fix: active ticker assertion on dispose with external controller.
+
 ## 1.0.0
 
 - Initial release.

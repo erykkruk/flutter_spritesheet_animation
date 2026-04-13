@@ -269,6 +269,14 @@ class _SpriteAnimationState extends State<SpriteAnimation>
   void _disposeController() {
     if (_ownsController) {
       _controller.dispose();
+    } else {
+      // External controller: stop the ticker created by this widget's
+      // TickerProvider. SingleTickerProviderStateMixin.dispose() asserts the
+      // ticker is inactive. The controller itself is NOT disposed — the
+      // caller manages its lifecycle.
+      if (_controller.isPlaying) {
+        _controller.pause();
+      }
     }
   }
 

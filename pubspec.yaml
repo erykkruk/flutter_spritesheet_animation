@@ -3,7 +3,7 @@ description: >-
   Lightweight spritesheet animation widget for Flutter. Grid-based and JSON
   atlas (TexturePacker, Aseprite) support with named animations, playback
   modes, and external controller.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/erykkruk/flutter_spritesheet_animation
 repository: https://github.com/erykkruk/flutter_spritesheet_animation
 issue_tracker: https://github.com/erykkruk/flutter_spritesheet_animation/issues
