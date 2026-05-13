@@ -32,7 +32,19 @@ class SpriteAnimationController extends ChangeNotifier {
   }) : _fps = fps,
        _mode = mode,
        _loop = loop,
-       _autoPlay = autoPlay;
+       _autoPlay = autoPlay {
+    if (fps <= 0) {
+      throw ArgumentError.value(fps, 'fps', 'Must be positive.');
+    }
+  }
+
+  // One second expressed in microseconds. Used to translate FPS into the
+  // per-frame microsecond budget in the tick accumulator.
+  static const int _kMicrosecondsPerSecond = 1000000;
+
+  // Frame duration values coming from atlas data are expressed in
+  // milliseconds; multiply by this constant to reach microseconds.
+  static const int _kMicrosecondsPerMillisecond = 1000;
 
   // ---------------------------------------------------------------------------
   // Configuration
@@ -262,9 +274,9 @@ class SpriteAnimationController extends ChangeNotifier {
   int get _currentFrameMicros {
     final frameData = currentFrameData;
     if (frameData?.duration != null && frameData!.duration! > 0) {
-      return frameData.duration! * 1000;
+      return frameData.duration! * _kMicrosecondsPerMillisecond;
     }
-    return (1000000 / _fps).round();
+    return (_kMicrosecondsPerSecond / _fps).round();
   }
 
   bool _advanceSingleFrame() {

@@ -1,3 +1,12 @@
+## 1.0.2
+
+- `SpriteAnimationController` constructor now validates `fps` immediately
+  (throws `ArgumentError` when `fps <= 0`). Previously the assertion only
+  ran when callers later mutated `fps` through the setter.
+- Extracted hot-loop magic numbers into named constants
+  (`_kMicrosecondsPerSecond`, `_kMicrosecondsPerMillisecond`) inside the
+  tick accumulator — no behavioural change, just readability.
+
 ## 1.0.1
 
 - Fix: active ticker assertion on dispose with external controller.

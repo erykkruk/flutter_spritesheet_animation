@@ -19,7 +19,7 @@ Lightweight spritesheet animation widget for Flutter. Supports grid-based and JS
 
 ```yaml
 dependencies:
-  flutter_spritesheet_animation: ^1.0.0
+  flutter_spritesheet_animation: ^1.0.2
 ```
 
 ## Usage
