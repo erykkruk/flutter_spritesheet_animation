@@ -1,3 +1,8 @@
+## 1.0.3
+
+- Added `PlayModeX` extension with `isForward`, `isReverse` and `isPingPong`
+  convenience getters on `PlayMode`.
+
 ## 1.0.2
 
 - `SpriteAnimationController` constructor now validates `fps` immediately
