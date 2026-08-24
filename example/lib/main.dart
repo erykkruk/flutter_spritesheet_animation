@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spritesheet_animation/flutter_spritesheet_animation.dart';
 
-const _backpackImage = AssetImage('assets/backpack.png');
+/// Demo spritesheet shipped with the example: an 8x8 grid of 64 frames.
+///
+/// Generated rather than sourced, so the example runs straight from a clone.
+/// `assets/backpack.png` stays gitignored and is not required.
+const _demoSheet = AssetImage('assets/sprite_demo.png');
 
 void main() => runApp(const ExampleApp());
 
@@ -33,7 +37,7 @@ class _PrecacheWrapperState extends State<PrecacheWrapper> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_ready) {
-      SpriteAnimation.precache(_backpackImage, context).then((_) {
+      SpriteAnimation.precache(_demoSheet, context).then((_) {
         if (mounted) setState(() => _ready = true);
       });
     }
@@ -42,9 +46,7 @@ class _PrecacheWrapperState extends State<PrecacheWrapper> {
   @override
   Widget build(BuildContext context) {
     if (!_ready) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return const BackpackDemo();
   }
@@ -87,7 +89,7 @@ class _BackpackDemoState extends State<BackpackDemo> {
 
               // --- Main animation with external controller ---
               SpriteAnimation.grid(
-                image: _backpackImage,
+                image: _demoSheet,
                 columns: 8,
                 rows: 8,
                 frameCount: 64,
@@ -152,8 +154,10 @@ class _BackpackDemoState extends State<BackpackDemo> {
                   IconButton(
                     icon: const Icon(Icons.remove),
                     onPressed: _controller.fps > 1
-                        ? () => _controller.fps =
-                            (_controller.fps - 5).clamp(1, 120)
+                        ? () => _controller.fps = (_controller.fps - 5).clamp(
+                            1,
+                            120,
+                          )
                         : null,
                     tooltip: 'Slower',
                   ),
@@ -171,8 +175,10 @@ class _BackpackDemoState extends State<BackpackDemo> {
                   IconButton(
                     icon: const Icon(Icons.add),
                     onPressed: _controller.fps < 120
-                        ? () => _controller.fps =
-                            (_controller.fps + 5).clamp(1, 120)
+                        ? () => _controller.fps = (_controller.fps + 5).clamp(
+                            1,
+                            120,
+                          )
                         : null,
                     tooltip: 'Faster',
                   ),
@@ -208,7 +214,7 @@ class _BackpackDemoState extends State<BackpackDemo> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SpriteAnimation.grid(
-                    image: _backpackImage,
+                    image: _demoSheet,
                     columns: 8,
                     rows: 8,
                     frameCount: 64,
@@ -218,7 +224,7 @@ class _BackpackDemoState extends State<BackpackDemo> {
                   ),
                   SizedBox(width: 8),
                   SpriteAnimation.grid(
-                    image: _backpackImage,
+                    image: _demoSheet,
                     columns: 8,
                     rows: 8,
                     frameCount: 64,
@@ -228,7 +234,7 @@ class _BackpackDemoState extends State<BackpackDemo> {
                   ),
                   SizedBox(width: 8),
                   SpriteAnimation.grid(
-                    image: _backpackImage,
+                    image: _demoSheet,
                     columns: 8,
                     rows: 8,
                     frameCount: 64,

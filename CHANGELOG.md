@@ -1,3 +1,25 @@
+## 1.1.0
+
+- Added `SpriteAnimationController.speed`, a playback multiplier that scales
+  the whole animation clock. Unlike `fps`, it also applies to atlas
+  animations whose frames carry their own durations, where the frame rate is
+  fixed by the data and `fps` is ignored.
+- Added `SpriteAnimationController.repeatCount`: play a looping animation a
+  fixed number of times, then fire `onComplete`. Null keeps the previous
+  unlimited behaviour. Changing it resets `completedCycles`, so a new limit
+  applies from now rather than counting cycles that already ran.
+- Added `completedCycles` and the `onCycle` callback, which fires on every
+  wrap of a looping animation with the number completed so far.
+- Added CI: `ci.yml` (format, analyze, test), `release.yml` (tag on version
+  change) and `publish.yml` (pub.dev via OIDC). This was the only package in
+  the workspace without them.
+- Added `example/assets/sprite_demo.png`, a generated 8x8 / 64-frame
+  spritesheet, and pointed the example at it. The example previously
+  referenced `assets/backpack.png`, which is gitignored and was never
+  committed, so the demo could not run from a clone and `flutter analyze`
+  warned about the missing asset directory. The gitignore entry is left
+  alone.
+
 ## 1.0.3
 
 - Added `PlayModeX` extension with `isForward`, `isReverse` and `isPingPong`

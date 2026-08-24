@@ -14,6 +14,8 @@ Lightweight spritesheet animation widget for Flutter. Supports grid-based and JS
 - Per-frame duration support from atlas data
 - Pre-computed frame rects for optimal rendering
 - Configurable FPS, looping, blend mode, box fit
+- Speed multiplier that also works on atlas animations with per-frame durations
+- Fixed repeat counts with per-cycle callbacks
 
 ## Installation
 
@@ -224,6 +226,35 @@ Optimized for smooth 60fps animation rendering:
 | `goToFrame(int)` | Jump to specific frame |
 | `setAnimation(String, {SpriteAtlas})` | Switch named animation |
 | `dispose()` | Clean up resources |
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `speed` | `double` | 1 | Playback multiplier applied to the whole clock |
+| `repeatCount` | `int?` | null | Cycles to play before completing; null is unlimited |
+| `completedCycles` | `int` | 0 | Cycles finished since playback started |
+| `onCycle` | `ValueChanged<int>?` | - | Fires on every wrap of a looping animation |
+
+#### Speed
+
+`fps` sets the base frame rate, but atlas animations carry per-frame
+durations and ignore it. `speed` scales the clock either way:
+
+```dart
+final controller = SpriteAnimationController(speed: 2);   // twice as fast
+controller.speed = 0.5;                                    // half speed
+```
+
+#### Fixed repeats
+
+```dart
+// Play the effect three times, then stop and call onComplete
+final controller = SpriteAnimationController(repeatCount: 3)
+  ..onCycle = (done) => debugPrint('cycle $done')
+  ..onComplete = () => debugPrint('done');
+```
+
+`repeatCount` only applies while `loop` is true: a non-looping animation
+always stops after one pass.
 
 ### SpriteAtlas
 

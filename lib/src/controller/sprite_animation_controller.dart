@@ -29,12 +29,26 @@ class SpriteAnimationController extends ChangeNotifier {
     PlayMode mode = PlayMode.forward,
     bool loop = true,
     bool autoPlay = true,
+    double speed = 1,
+    int? repeatCount,
   }) : _fps = fps,
        _mode = mode,
        _loop = loop,
-       _autoPlay = autoPlay {
+       _autoPlay = autoPlay,
+       _speed = speed,
+       _repeatCount = repeatCount {
     if (fps <= 0) {
       throw ArgumentError.value(fps, 'fps', 'Must be positive.');
+    }
+    if (speed <= 0) {
+      throw ArgumentError.value(speed, 'speed', 'Must be positive.');
+    }
+    if (repeatCount != null && repeatCount <= 0) {
+      throw ArgumentError.value(
+        repeatCount,
+        'repeatCount',
+        'Must be positive, or null for unlimited.',
+      );
     }
   }
 
@@ -54,6 +68,8 @@ class SpriteAnimationController extends ChangeNotifier {
   PlayMode _mode;
   bool _loop;
   final bool _autoPlay;
+  double _speed;
+  int? _repeatCount;
 
   /// Frames per second.
   double get fps => _fps;
@@ -88,6 +104,50 @@ class SpriteAnimationController extends ChangeNotifier {
   /// Whether playback starts automatically when attached.
   bool get autoPlay => _autoPlay;
 
+  /// Playback speed multiplier.
+  ///
+  /// Scales the whole animation clock: `2.0` runs twice as fast, `0.5` at
+  /// half speed. Unlike [fps], this also applies to atlas animations whose
+  /// frames carry their own durations, where the frame rate is fixed by the
+  /// data and [fps] is ignored.
+  ///
+  /// Must be positive; use [pause] to stop.
+  double get speed => _speed;
+  set speed(double value) {
+    if (value <= 0) {
+      throw ArgumentError.value(value, 'speed', 'Must be positive.');
+    }
+    if (_speed != value) {
+      _speed = value;
+      notifyListeners();
+    }
+  }
+
+  /// How many cycles to play before completing, or null for unlimited.
+  ///
+  /// Only meaningful while [loop] is true: a non-looping animation always
+  /// stops after one pass. Setting it to `3` plays the animation three
+  /// times and then fires [onComplete], which is the usual shape for an
+  /// effect that should repeat a fixed number of times.
+  ///
+  /// Changing it resets [completedCycles], so the new count applies from
+  /// now rather than counting cycles that already ran.
+  int? get repeatCount => _repeatCount;
+  set repeatCount(int? value) {
+    if (value != null && value <= 0) {
+      throw ArgumentError.value(
+        value,
+        'repeatCount',
+        'Must be positive, or null for unlimited.',
+      );
+    }
+    if (_repeatCount != value) {
+      _repeatCount = value;
+      _completedCycles = 0;
+      notifyListeners();
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Playback state
   // ---------------------------------------------------------------------------
@@ -102,6 +162,7 @@ class SpriteAnimationController extends ChangeNotifier {
   Ticker? _ticker;
   Duration _previousElapsed = Duration.zero;
   int _accumulatedMicros = 0;
+  int _completedCycles = 0;
 
   /// The index of the currently displayed frame.
   int get currentFrame => _currentFrame;
@@ -111,6 +172,9 @@ class SpriteAnimationController extends ChangeNotifier {
 
   /// Total number of frames in the current animation.
   int get totalFrames => _totalFrames;
+
+  /// Cycles finished since playback last started or [repeatCount] changed.
+  int get completedCycles => _completedCycles;
 
   /// Name of the current animation (atlas mode only).
   String? get animationName => _animationName;
@@ -129,7 +193,15 @@ class SpriteAnimationController extends ChangeNotifier {
   ValueChanged<int>? onFrame;
 
   /// Called when a non-looping animation completes.
+  ///
+  /// Also fires when a looping animation reaches its [repeatCount].
   VoidCallback? onComplete;
+
+  /// Called each time a cycle finishes, with the number completed so far.
+  ///
+  /// Fires on every wrap of a looping animation, including the last one
+  /// before [onComplete].
+  ValueChanged<int>? onCycle;
 
   // ---------------------------------------------------------------------------
   // Ticker management
@@ -208,6 +280,7 @@ class SpriteAnimationController extends ChangeNotifier {
     _isPlaying = true;
     _previousElapsed = Duration.zero;
     _accumulatedMicros = 0;
+    _completedCycles = 0;
     _ticker?.start();
     notifyListeners();
   }
@@ -233,6 +306,7 @@ class SpriteAnimationController extends ChangeNotifier {
     _isForward = true;
     _previousElapsed = Duration.zero;
     _accumulatedMicros = 0;
+    _completedCycles = 0;
     notifyListeners();
   }
 
@@ -273,10 +347,27 @@ class SpriteAnimationController extends ChangeNotifier {
 
   int get _currentFrameMicros {
     final frameData = currentFrameData;
-    if (frameData?.duration != null && frameData!.duration! > 0) {
-      return frameData.duration! * _kMicrosecondsPerMillisecond;
+    final baseMicros = frameData?.duration != null && frameData!.duration! > 0
+        ? frameData.duration! * _kMicrosecondsPerMillisecond
+        : _kMicrosecondsPerSecond / _fps;
+    // At least one microsecond: a zero budget would spin the accumulator
+    // loop forever within a single tick.
+    final scaled = (baseMicros / _speed).round();
+    return scaled < 1 ? 1 : scaled;
+  }
+
+  /// Records a finished cycle and reports whether playback should continue.
+  ///
+  /// Returns false once [repeatCount] is reached, having completed.
+  bool _onCycleComplete() {
+    _completedCycles++;
+    onCycle?.call(_completedCycles);
+    final limit = _repeatCount;
+    if (limit != null && _completedCycles >= limit) {
+      _complete();
+      return false;
     }
-    return (_kMicrosecondsPerSecond / _fps).round();
+    return true;
   }
 
   bool _advanceSingleFrame() {
@@ -295,6 +386,7 @@ class SpriteAnimationController extends ChangeNotifier {
       // At last frame - wrap or stop
       if (_loop) {
         _currentFrame = 0;
+        if (!_onCycleComplete()) return false;
       } else {
         _complete();
         return false;
@@ -317,6 +409,7 @@ class SpriteAnimationController extends ChangeNotifier {
       // At first frame - wrap or stop
       if (_loop) {
         _currentFrame = _totalFrames - 1;
+        if (!_onCycleComplete()) return false;
       } else {
         _complete();
         return false;
@@ -349,6 +442,7 @@ class SpriteAnimationController extends ChangeNotifier {
           _isForward = true;
           _currentFrame = 1;
           if (_currentFrame >= _totalFrames) _currentFrame = 0;
+          if (!_onCycleComplete()) return false;
         } else {
           _currentFrame = 0;
           _complete();
