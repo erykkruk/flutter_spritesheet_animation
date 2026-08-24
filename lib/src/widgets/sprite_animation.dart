@@ -158,9 +158,7 @@ class SpriteAnimation extends StatefulWidget {
     List<ImageProvider> images,
     BuildContext context,
   ) {
-    return Future.wait(
-      images.map((image) => precacheImage(image, context)),
-    );
+    return Future.wait(images.map((image) => precacheImage(image, context)));
   }
 
   @override
