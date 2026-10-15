@@ -21,7 +21,7 @@ Lightweight spritesheet animation widget for Flutter. Supports grid-based and JS
 
 ```yaml
 dependencies:
-  flutter_spritesheet_animation: ^1.0.2
+  flutter_spritesheet_animation: ^1.2.0
 ```
 
 ## Usage
@@ -134,6 +134,10 @@ SpriteAnimation.grid(
   onComplete: () => print('Animation finished'),
 )
 ```
+
+With an external controller, callbacks set on the controller are kept
+unless the widget passes its own `onFrame` / `onComplete`, which then take
+precedence.
 
 ### Atlas JSON Formats
 

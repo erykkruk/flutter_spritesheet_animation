@@ -1,3 +1,23 @@
+## 1.2.0
+
+- Fixed `SpriteAnimation.grid` going blank after `columns`, `rows` or
+  `frameCount` changed on rebuild. The frame rects were cleared but only
+  rebuilt when a new image loaded, and the controller kept the old frame
+  count. Both are now updated in place, without resuming a paused or
+  finished animation.
+- Fixed callbacks set on an external `SpriteAnimationController` (as in the
+  `repeatCount` example) being wiped when the controller was handed to the
+  widget. The widget now only replaces them with callbacks of its own.
+- Fixed `onFrame` and `onComplete` going stale: a rebuild with new
+  callbacks now reaches the controller instead of it calling the ones from
+  the first build.
+- Added `autoStart` to `SpriteAnimationController.setupGrid` (default
+  `true`, unchanged behaviour) so the frame count can be updated without
+  starting playback.
+- Fixed the release workflow, which could not push the version tag (403)
+  because the repository had no `RELEASE_DEPLOY_KEY`. It now fails early
+  with a clear message when the key is missing.
+
 ## 1.1.0
 
 - Added `SpriteAnimationController.speed`, a playback multiplier that scales

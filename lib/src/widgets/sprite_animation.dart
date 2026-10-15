@@ -105,9 +105,13 @@ class SpriteAnimation extends StatefulWidget {
   final BlendMode blendMode;
 
   /// Called when the frame changes.
+  ///
+  /// When null, a callback already set on an external [controller] is kept.
   final ValueChanged<int>? onFrame;
 
   /// Called when a non-looping animation completes.
+  ///
+  /// When null, a callback already set on an external [controller] is kept.
   final VoidCallback? onComplete;
 
   /// Optional external controller for programmatic playback control.
@@ -201,6 +205,15 @@ class _SpriteAnimationState extends State<SpriteAnimation>
     if (widget.controller != oldWidget.controller) {
       _disposeController();
       _initController();
+    } else {
+      // Callbacks are usually closures recreated on every build; without
+      // this the controller keeps calling the ones from the first build.
+      if (widget.onFrame != oldWidget.onFrame) {
+        _controller.onFrame = widget.onFrame;
+      }
+      if (widget.onComplete != oldWidget.onComplete) {
+        _controller.onComplete = widget.onComplete;
+      }
     }
 
     // Handle image change
@@ -223,11 +236,19 @@ class _SpriteAnimationState extends State<SpriteAnimation>
       _controller.setAnimation(name, atlas: widget.atlas!);
     }
 
-    // Invalidate grid rects if grid config changed
+    // Rebuild grid rects and the frame count if grid config changed.
+    // _onImageLoaded only runs for a new image, so nothing else would.
     if (widget.columns != oldWidget.columns ||
         widget.rows != oldWidget.rows ||
         widget.frameCount != oldWidget.frameCount) {
       _gridRects = null;
+      if (widget.isGrid) {
+        _controller.setupGrid(
+          totalFrames: widget.frameCount ?? (widget.columns! * widget.rows!),
+          autoStart: false,
+        );
+        _buildGridRects();
+      }
     }
   }
 
@@ -246,8 +267,14 @@ class _SpriteAnimationState extends State<SpriteAnimation>
     }
 
     _controller.attach(this);
-    _controller.onFrame = widget.onFrame;
-    _controller.onComplete = widget.onComplete;
+    // An external controller may carry its own callbacks (see the README's
+    // repeatCount example), so only replace them with ones the widget has.
+    if (_ownsController || widget.onFrame != null) {
+      _controller.onFrame = widget.onFrame;
+    }
+    if (_ownsController || widget.onComplete != null) {
+      _controller.onComplete = widget.onComplete;
+    }
 
     _setupFrames();
   }

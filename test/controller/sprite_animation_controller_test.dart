@@ -112,6 +112,33 @@ void main() {
         controller.setupGrid(totalFrames: 5);
         expect(controller.currentFrame, 4);
       });
+
+      test('starts an attached autoPlay controller by default', () {
+        // Arrange
+        final autoPlaying = SpriteAnimationController()
+          ..attach(const _TestVSync());
+
+        // Act
+        autoPlaying.setupGrid(totalFrames: 4);
+
+        // Assert
+        expect(autoPlaying.isPlaying, true);
+        autoPlaying.dispose();
+      });
+
+      test('autoStart false only updates the frame count', () {
+        // Arrange
+        final autoPlaying = SpriteAnimationController()
+          ..attach(const _TestVSync());
+
+        // Act
+        autoPlaying.setupGrid(totalFrames: 4, autoStart: false);
+
+        // Assert
+        expect(autoPlaying.totalFrames, 4);
+        expect(autoPlaying.isPlaying, false);
+        autoPlaying.dispose();
+      });
     });
 
     group('setupAtlas', () {
