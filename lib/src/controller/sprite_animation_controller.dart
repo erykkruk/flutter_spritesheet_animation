@@ -214,12 +214,17 @@ class SpriteAnimationController extends ChangeNotifier {
   }
 
   /// Sets up the frame data for grid-based animation.
-  void setupGrid({required int totalFrames}) {
+  ///
+  /// With [autoStart] (the default), an [autoPlay] controller that is not
+  /// playing starts. Pass `false` to only update the frame count, as the
+  /// widget does when its grid changes, so a paused or finished animation
+  /// stays that way.
+  void setupGrid({required int totalFrames, bool autoStart = true}) {
     _totalFrames = totalFrames;
     _frames = null;
     _animationName = null;
     _currentFrame = _currentFrame.clamp(0, _totalFrames - 1);
-    if (_autoPlay && !_isPlaying && _ticker != null) {
+    if (autoStart && _autoPlay && !_isPlaying && _ticker != null) {
       _startSilently();
     }
   }
