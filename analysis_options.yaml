@@ -10,3 +10,18 @@ linter:
     sort_child_properties_last: true
     unawaited_futures: true
     unnecessary_lambdas: true
+
+analyzer:
+  # Kept in sync with Flutter's AnalysisOptionsMigration, which otherwise
+  # rewrites this file during `flutter pub get` and leaves the tree dirty
+  # for `pub publish --dry-run`. Covers every platform directory the
+  # migration can ask for, so adding a platform later cannot silently
+  # break the release workflow.
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
