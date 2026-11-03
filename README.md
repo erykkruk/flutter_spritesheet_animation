@@ -213,6 +213,7 @@ Optimized for smooth 60fps animation rendering:
 | `loop` | `bool` | true | Loop animation |
 | `mode` | `PlayMode` | forward | Playback direction |
 | `blendMode` | `BlendMode` | srcOver | Canvas blend mode |
+| `filterQuality` | `FilterQuality` | low | Scaling quality; use `none` for crisp pixel art |
 | `fit` | `BoxFit` | contain | How sprite fits in bounds |
 | `width` | `double?` | - | Fixed width |
 | `height` | `double?` | - | Fixed height |

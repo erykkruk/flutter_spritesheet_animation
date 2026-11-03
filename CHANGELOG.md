@@ -1,3 +1,10 @@
+## 1.3.0
+
+- Added `filterQuality` to `SpriteAnimation.grid` and `SpriteAnimation.atlas`
+  (default `FilterQuality.low`, unchanged behaviour). Use
+  `FilterQuality.none` to keep pixel art crisp when it is scaled.
+- Fixed a `blendMode` change not repainting a paused or stopped animation.
+
 ## 1.2.0
 
 - Fixed `SpriteAnimation.grid` going blank after `columns`, `rows` or

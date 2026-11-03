@@ -38,6 +38,7 @@ class SpriteAnimation extends StatefulWidget {
     this.loop = true,
     this.mode = PlayMode.forward,
     this.blendMode = BlendMode.srcOver,
+    this.filterQuality = FilterQuality.low,
     this.onFrame,
     this.onComplete,
     this.controller,
@@ -61,6 +62,7 @@ class SpriteAnimation extends StatefulWidget {
     this.loop = true,
     this.mode = PlayMode.forward,
     this.blendMode = BlendMode.srcOver,
+    this.filterQuality = FilterQuality.low,
     this.onFrame,
     this.onComplete,
     this.controller,
@@ -103,6 +105,15 @@ class SpriteAnimation extends StatefulWidget {
 
   /// Blend mode used when painting the sprite.
   final BlendMode blendMode;
+
+  /// Sampling quality used when a frame is drawn at a different size than it
+  /// has in the spritesheet.
+  ///
+  /// Defaults to [FilterQuality.low], which smooths the frame with bilinear
+  /// filtering. Use [FilterQuality.none] (nearest-neighbor) for pixel art,
+  /// which would otherwise look blurry. Devices with a pixel ratio above 1
+  /// scale every frame, even when the widget matches the frame size.
+  final FilterQuality filterQuality;
 
   /// Called when the frame changes.
   ///
@@ -181,9 +192,7 @@ class _SpriteAnimationState extends State<SpriteAnimation>
   List<Rect>? _gridRects;
 
   // Reusable Paint object — avoids allocation per frame.
-  final Paint _spritePaint = Paint()
-    ..filterQuality = FilterQuality.low
-    ..isAntiAlias = false;
+  final Paint _spritePaint = Paint()..isAntiAlias = false;
 
   @override
   void initState() {
@@ -383,7 +392,9 @@ class _SpriteAnimationState extends State<SpriteAnimation>
       return SizedBox(width: widget.width, height: widget.height);
     }
 
-    _spritePaint.blendMode = widget.blendMode;
+    _spritePaint
+      ..blendMode = widget.blendMode
+      ..filterQuality = widget.filterQuality;
 
     return CustomPaint(
       size: Size(
@@ -395,6 +406,8 @@ class _SpriteAnimationState extends State<SpriteAnimation>
         controller: _controller,
         gridRects: _gridRects,
         spritePaint: _spritePaint,
+        blendMode: widget.blendMode,
+        filterQuality: widget.filterQuality,
         fit: widget.fit,
       ),
     );
@@ -418,6 +431,8 @@ class _SpritePainter extends CustomPainter {
     required this.controller,
     this.gridRects,
     required this.spritePaint,
+    required this.blendMode,
+    required this.filterQuality,
     required this.fit,
   }) : super(repaint: controller);
 
@@ -425,6 +440,8 @@ class _SpritePainter extends CustomPainter {
   final SpriteAnimationController controller;
   final List<Rect>? gridRects;
   final Paint spritePaint;
+  final BlendMode blendMode;
+  final FilterQuality filterQuality;
   final BoxFit fit;
 
   @override
@@ -463,5 +480,8 @@ class _SpritePainter extends CustomPainter {
       image != oldDelegate.image ||
       gridRects != oldDelegate.gridRects ||
       fit != oldDelegate.fit ||
-      spritePaint.blendMode != oldDelegate.spritePaint.blendMode;
+      // spritePaint is the same reused object in both delegates, so its
+      // settings have to be compared through these copies.
+      blendMode != oldDelegate.blendMode ||
+      filterQuality != oldDelegate.filterQuality;
 }
